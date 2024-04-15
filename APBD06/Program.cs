@@ -1,5 +1,3 @@
-using System.Data.SqlClient;
-using APBD06.DTOs;
 using APBD06.Endpoints;
 using APBD06.Validators;
 using FluentValidation;

@@ -13,15 +13,15 @@ public static class AnimalsEndpoints
             var animals = new List<GetAllAnimalsResponse>();
             using var sqlConnection = new SqlConnection(configuration.GetConnectionString("Default"));
             var allowedOrderBy = new List<string?> { "IdAnimal", "Name", "Description", "Category", "Area" };
-            var sqlText = allowedOrderBy.Contains(orderBy) ? $"SELECT * FROM Animal ORDER BY {orderBy}" :
-                "SELECT * FROM Animal ORDER BY Name";
-        
+            var sqlText = allowedOrderBy.Contains(orderBy)
+                ? $"SELECT * FROM Animal ORDER BY {orderBy}"
+                : "SELECT * FROM Animal ORDER BY Name";
+
 
             var sqlCommand = new SqlCommand(sqlText, sqlConnection);
             sqlCommand.Connection.Open();
             var sqlDataReader = sqlCommand.ExecuteReader();
             while (sqlDataReader.Read())
-            {
                 animals.Add(new GetAllAnimalsResponse(
                     sqlDataReader.GetInt32(0),
                     sqlDataReader.GetString(1),
@@ -29,16 +29,16 @@ public static class AnimalsEndpoints
                     sqlDataReader.GetString(3),
                     sqlDataReader.GetString(4)));
 
-            }
             return Results.Ok(animals);
         });
 
-        app.MapPost("animals/", (IConfiguration configuration, CreateAnimalRequest request,
-            IValidator<CreateAnimalRequest> validator) =>
+        app.MapPost("animals/", (
+            IConfiguration configuration, CreateAnimalRequest request, IValidator<CreateAnimalRequest> validator
+        ) =>
         {
             var validation = validator.Validate(request);
             if (!validation.IsValid) return Results.ValidationProblem(validation.ToDictionary());
-    
+
             using var sqlConnection = new SqlConnection(configuration.GetConnectionString("Default"));
             var sqlCommand = new SqlCommand(
                 "INSERT INTO Animal (Name, Description, Category, Area) VALUES (@name, @desc, @category, @area)",
@@ -52,9 +52,10 @@ public static class AnimalsEndpoints
 
             return Results.Created("", null);
         });
-        
-        app.MapPut("animals/{id:int}", (IConfiguration configuration, int id, CreateAnimalRequest request,
-                IValidator<CreateAnimalRequest> validator) =>
+
+        app.MapPut("animals/{id:int}", (
+            IConfiguration configuration, int id, CreateAnimalRequest request, IValidator<CreateAnimalRequest> validator
+        ) =>
         {
             var validation = validator.Validate(request);
             if (!validation.IsValid) return Results.ValidationProblem(validation.ToDictionary());
