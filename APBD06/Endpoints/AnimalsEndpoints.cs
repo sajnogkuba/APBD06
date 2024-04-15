@@ -52,5 +52,20 @@ public static class AnimalsEndpoints
 
             return Results.Created("", null);
         });
+
+        app.MapDelete("animals/{id:int}", (IConfiguration configuration, int id) =>
+        {
+            using var connection = new SqlConnection(configuration.GetConnectionString("Default"));
+            var sqlCommand = new SqlCommand("SELECT * FROM Animal WHERE IdAnimal = @id", connection);
+            sqlCommand.Parameters.AddWithValue("@id", id);
+            sqlCommand.Connection.Open();
+            var sqlDataReader = sqlCommand.ExecuteReader();
+            if (!sqlDataReader.Read()) return Results.NotFound();
+            sqlDataReader.Close();
+            sqlCommand = new SqlCommand("DELETE FROM Animal WHERE IdAnimal = @id", connection);
+            sqlCommand.Parameters.AddWithValue("@id", id);
+            sqlCommand.ExecuteNonQuery();
+            return Results.NoContent();
+        });
     }
 }
