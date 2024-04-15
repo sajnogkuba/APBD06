@@ -1,5 +1,7 @@
 using System.Data.SqlClient;
 using APBD06.DTOs;
+using APBD06.Validators;
+using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateAnimalRequestValidator>();
 
 var app = builder.Build();
 
@@ -44,8 +47,12 @@ app.MapGet("animals/", (IConfiguration configuration, string? orderBy = "") =>
     return Results.Ok(animals);
 });
 
-app.MapPost("animals/", (IConfiguration configuration, CreateAnimalRequest request) =>
+app.MapPost("animals/", (IConfiguration configuration, CreateAnimalRequest request,
+    IValidator<CreateAnimalRequest> validator) =>
 {
+    var validation = validator.Validate(request);
+    if (!validation.IsValid) return Results.ValidationProblem(validation.ToDictionary());
+    
     using var sqlConnection = new SqlConnection(configuration.GetConnectionString("Default"));
     var sqlCommand = new SqlCommand(
         "INSERT INTO Animal (Name, Description, Category, Area) VALUES (@name, @desc, @category, @area)",
