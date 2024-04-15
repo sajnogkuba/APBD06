@@ -52,6 +52,32 @@ public static class AnimalsEndpoints
 
             return Results.Created("", null);
         });
+        
+        app.MapPut("animals/{id:int}", (IConfiguration configuration, int id, CreateAnimalRequest request,
+                IValidator<CreateAnimalRequest> validator) =>
+        {
+            var validation = validator.Validate(request);
+            if (!validation.IsValid) return Results.ValidationProblem(validation.ToDictionary());
+            using var connection = new SqlConnection(configuration.GetConnectionString("Default"));
+            var sqlCommand = new SqlCommand("SELECT * FROM Animal WHERE IdAnimal = @id", connection);
+            sqlCommand.Parameters.AddWithValue("@id", id);
+            sqlCommand.Connection.Open();
+            var sqlDataReader = sqlCommand.ExecuteReader();
+            if (!sqlDataReader.Read()) return Results.NotFound();
+            sqlDataReader.Close();
+            sqlCommand = new SqlCommand("UPDATE Animal SET Name = @name," +
+                                        " Description = @desc, " +
+                                        "Category    = @category, " +
+                                        "Area = @area WHERE IdAnimal = @id ",
+                connection);
+            sqlCommand.Parameters.AddWithValue("@name", request.Name);
+            sqlCommand.Parameters.AddWithValue("@desc", request.Description);
+            sqlCommand.Parameters.AddWithValue("@category", request.Category);
+            sqlCommand.Parameters.AddWithValue("@area", request.Area);
+            sqlCommand.Parameters.AddWithValue("@id", id);
+            sqlCommand.ExecuteNonQuery();
+            return Results.NoContent();
+        });
 
         app.MapDelete("animals/{id:int}", (IConfiguration configuration, int id) =>
         {
